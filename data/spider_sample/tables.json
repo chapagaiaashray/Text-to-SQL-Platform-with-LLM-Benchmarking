@@ -1,0 +1,234 @@
+[
+  {
+    "db_id": "college_1",
+    "table_names_original": [
+      "student",
+      "course",
+      "enrollment"
+    ],
+    "table_names": [
+      "student",
+      "course",
+      "enrollment"
+    ],
+    "column_names_original": [
+      [
+        -1,
+        "*"
+      ],
+      [
+        0,
+        "student_id"
+      ],
+      [
+        0,
+        "name"
+      ],
+      [
+        0,
+        "gpa"
+      ],
+      [
+        1,
+        "course_id"
+      ],
+      [
+        1,
+        "title"
+      ],
+      [
+        1,
+        "credits"
+      ],
+      [
+        2,
+        "enroll_id"
+      ],
+      [
+        2,
+        "student_id"
+      ],
+      [
+        2,
+        "course_id"
+      ],
+      [
+        2,
+        "grade"
+      ]
+    ],
+    "column_names": [
+      [
+        -1,
+        "*"
+      ],
+      [
+        0,
+        "student id"
+      ],
+      [
+        0,
+        "name"
+      ],
+      [
+        0,
+        "gpa"
+      ],
+      [
+        1,
+        "course id"
+      ],
+      [
+        1,
+        "title"
+      ],
+      [
+        1,
+        "credits"
+      ],
+      [
+        2,
+        "enroll id"
+      ],
+      [
+        2,
+        "student id"
+      ],
+      [
+        2,
+        "course id"
+      ],
+      [
+        2,
+        "grade"
+      ]
+    ],
+    "column_types": [
+      "text",
+      "number",
+      "text",
+      "number",
+      "number",
+      "text",
+      "number",
+      "number",
+      "number",
+      "number",
+      "text"
+    ],
+    "primary_keys": [
+      1,
+      4,
+      7
+    ],
+    "foreign_keys": [
+      [
+        8,
+        1
+      ],
+      [
+        9,
+        4
+      ]
+    ]
+  },
+  {
+    "db_id": "pets_1",
+    "table_names_original": [
+      "owner",
+      "pet"
+    ],
+    "table_names": [
+      "owner",
+      "pet"
+    ],
+    "column_names_original": [
+      [
+        -1,
+        "*"
+      ],
+      [
+        0,
+        "owner_id"
+      ],
+      [
+        0,
+        "owner_name"
+      ],
+      [
+        0,
+        "city"
+      ],
+      [
+        1,
+        "pet_id"
+      ],
+      [
+        1,
+        "owner_id"
+      ],
+      [
+        1,
+        "species"
+      ],
+      [
+        1,
+        "age"
+      ]
+    ],
+    "column_names": [
+      [
+        -1,
+        "*"
+      ],
+      [
+        0,
+        "owner id"
+      ],
+      [
+        0,
+        "owner name"
+      ],
+      [
+        0,
+        "city"
+      ],
+      [
+        1,
+        "pet id"
+      ],
+      [
+        1,
+        "owner id"
+      ],
+      [
+        1,
+        "species"
+      ],
+      [
+        1,
+        "age"
+      ]
+    ],
+    "column_types": [
+      "text",
+      "number",
+      "text",
+      "text",
+      "number",
+      "number",
+      "text",
+      "number"
+    ],
+    "primary_keys": [
+      1,
+      4
+    ],
+    "foreign_keys": [
+      [
+        5,
+        1
+      ]
+    ]
+  }
+]

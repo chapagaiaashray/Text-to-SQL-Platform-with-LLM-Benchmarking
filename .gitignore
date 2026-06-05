@@ -1,0 +1,47 @@
+# ---- Secrets ----
+.env
+*.pem
+*.key
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# ---- Datasets (large; downloaded via scripts, not committed) ----
+data/spider/*
+!data/spider/.gitkeep
+data/bird/*
+!data/bird/.gitkeep
+
+# ---- Vector store (Week 6) ----
+chroma_db/
+*.chroma
+
+# ---- Benchmark outputs (regenerated) ----
+benchmarks/results/*.json
+benchmarks/results/*.csv
+!benchmarks/results/.gitkeep
+
+# ---- Docker volumes ----
+pgdata/
+
+# ---- Node / frontend ----
+node_modules/
+frontend/dist/
+frontend/build/
+
+# ---- OS / editor ----
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ---- MISC ----
+explanation.txt
+
+

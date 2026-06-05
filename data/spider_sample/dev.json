@@ -1,0 +1,42 @@
+[
+  {
+    "db_id": "college_1",
+    "question": "List all student names.",
+    "query": "SELECT name FROM student"
+  },
+  {
+    "db_id": "college_1",
+    "question": "How many students have a GPA above 3.5?",
+    "query": "SELECT count(*) FROM student WHERE gpa > 3.5"
+  },
+  {
+    "db_id": "college_1",
+    "question": "Show each student's name and the title of courses they are enrolled in.",
+    "query": "SELECT s.name, c.title FROM enrollment e JOIN student s ON e.student_id = s.student_id JOIN course c ON e.course_id = c.course_id"
+  },
+  {
+    "db_id": "college_1",
+    "question": "What is the average GPA per course title?",
+    "query": "SELECT c.title, avg(s.gpa) FROM enrollment e JOIN student s ON e.student_id = s.student_id JOIN course c ON e.course_id = c.course_id GROUP BY c.title HAVING count(*) > 1"
+  },
+  {
+    "db_id": "college_1",
+    "question": "Which students have a GPA higher than the average GPA?",
+    "query": "SELECT name FROM student WHERE gpa > (SELECT avg(gpa) FROM student)"
+  },
+  {
+    "db_id": "pets_1",
+    "question": "List all pet species.",
+    "query": "SELECT DISTINCT species FROM pet"
+  },
+  {
+    "db_id": "pets_1",
+    "question": "How many pets does each owner have?",
+    "query": "SELECT o.owner_name, count(*) FROM owner o JOIN pet p ON p.owner_id = o.owner_id GROUP BY o.owner_name"
+  },
+  {
+    "db_id": "pets_1",
+    "question": "Rank pets by age within each species.",
+    "query": "SELECT pet_id, species, age, rank() OVER (PARTITION BY species ORDER BY age DESC) AS age_rank FROM pet"
+  }
+]
