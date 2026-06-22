@@ -51,30 +51,27 @@ Next milestone (Week 4): load the full Spider dataset and vendor Spider's offici
 
 ## Architecture
 
+```mermaid
+flowchart TD
+    Q["Question + target database"]
+    SI["Schema Introspectorreads tables, columns, keys, sample rows"]
+    PR["Prompt Builder + LLM Router4 strategies; routes to Claude; tracks cost"]
+    CL["SQL Cleanupstrips markdown fences from model output"]
+    EX["Read-only Execution Sandboxquery_executor role; search_path; timeout"]
+    SC["Scorerexecution accuracy vs gold query"]
+    BE["Benchmark Engine + Analysisfull Spider + official evaluator"]
+    RAG["RAG Self-Correction Loopretrieve context; repair failed SQL"]
+
+    Q --> SI --> PR --> CL --> EX --> SC --> BE --> RAG
+
+    classDef done fill:#2da44e,stroke:#2da44e,color:#ffffff;
+    classDef planned fill:#6e7681,stroke:#6e7681,color:#ffffff,stroke-dasharray:4 4;
+
+    class SI,PR,CL,EX,SC done
+    class BE,RAG planned
 ```
-  question + target database
-        |
-        v
-  Schema Introspector          reads tables, columns, keys, sample rows     (implemented)
-        |  prompt-ready schema
-        v
-  Prompt Builder + LLM Router  4 strategies; routes to Claude, tracks cost  (implemented)
-        |  generated SQL
-        v
-  SQL Cleanup                  strips markdown fences from model output     (implemented)
-        |
-        v
-  Read-only Execution Sandbox  query_executor role; search_path; timeout    (implemented)
-        |  result rows / error
-        v
-  Scorer                       execution accuracy vs gold query             (implemented, basic)
-        |
-        v
-  Benchmark Engine + Analysis  full Spider + official evaluator             (planned, Week 4-5)
-        |
-        v
-  RAG Self-Correction Loop     retrieve context, repair failed SQL          (planned, Week 6)
-```
+
+> Green nodes are implemented; dashed grey nodes are planned (Weeks 4–6).
 
 ---
 
