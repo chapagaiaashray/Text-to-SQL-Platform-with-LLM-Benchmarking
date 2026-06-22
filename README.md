@@ -51,28 +51,27 @@ Next milestone (Week 4): load the full Spider dataset and vendor Spider's offici
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    Q["Question + target database"]
-    SI["Schema Introspector reads tables, columns, keys, sample rows"]
-    PR["Prompt Builder + LLM Router4 strategies; routes to Claude; tracks cost"]
-    CL["SQL Cleanupstrips markdown fences from model output"]
-    EX["Read-only Execution Sandboxquery_executor role; search_path; timeout"]
-    SC["Scorerexecution accuracy vs gold query"]
-    BE["Benchmark Engine + Analysisfull Spider + official evaluator"]
-    RAG["RAG Self-Correction Loopretrieve context; repair failed SQL"]
+The pipeline runs top to bottom. `[done]` stages are implemented; `[planned]` stages are scheduled for Weeks 4–6.
 
-    Q --> SI --> PR --> CL --> EX --> SC --> BE --> RAG
-
-    classDef done fill:#2da44e,stroke:#2da44e,color:#ffffff;
-    classDef planned fill:#6e7681,stroke:#6e7681,color:#ffffff,stroke-dasharray:4 4;
-
-    class SI,PR,CL,EX,SC done
-    class BE,RAG planned
+```
+question + target database
+            |
+            v
+  Schema Introspector ........... [done]
+  Prompt Builder + LLM Router ... [done]
+  SQL Cleanup ................... [done]
+  Read-only Execution Sandbox ... [done]
+  Scorer (execution accuracy) ... [done]
+            |
+            v
+  Benchmark Engine + Analysis ... [planned]
+  RAG Self-Correction Loop ...... [planned]
+            |
+            v
+     scored benchmark results
 ```
 
-> Green nodes are implemented; dashed grey nodes are planned (Weeks 4–6).
-
+**Stages.** The *Schema Introspector* reads the target database's tables, columns, and keys and renders them for the prompt. The *Prompt Builder + LLM Router* wraps that schema under one of four strategies and calls the model, tracking token cost. *SQL Cleanup* strips markdown fences from the output. The *Execution Sandbox* runs the query as a read-only role with a timeout. The *Scorer* compares the result against the gold query (execution accuracy). The *Benchmark Engine* and *RAG self-correction loop* are the next milestones.
 ---
 
 ## Tech Stack
