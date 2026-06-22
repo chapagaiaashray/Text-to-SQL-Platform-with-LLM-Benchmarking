@@ -54,7 +54,7 @@ Next milestone (Week 4): load the full Spider dataset and vendor Spider's offici
 ```mermaid
 flowchart TD
     Q["Question + target database"]
-    SI["Schema Introspectorreads tables, columns, keys, sample rows"]
+    SI["Schema Introspector reads tables, columns, keys, sample rows"]
     PR["Prompt Builder + LLM Router4 strategies; routes to Claude; tracks cost"]
     CL["SQL Cleanupstrips markdown fences from model output"]
     EX["Read-only Execution Sandboxquery_executor role; search_path; timeout"]
