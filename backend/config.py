@@ -24,11 +24,16 @@ class Settings(BaseSettings):
     query_executor_password: str = Field(default="change_me_readonly")
     query_timeout_ms: int = Field(default=5000)
 
-    # ---- LLM keys (Week 2) ----
+    # ---- LLM providers ----
     openai_api_key: str = Field(default="")
     anthropic_api_key: str = Field(default="")
     google_api_key: str = Field(default="")
     ollama_base_url: str = Field(default="http://localhost:11434")
+
+    # Haiku is the cheapest current model — our default for dev and most
+    # benchmarking. Override per-call for the occasional Sonnet/Opus comparison.
+    llm_model: str = Field(default="claude-haiku-4-5-20251001")
+    llm_max_tokens: int = Field(default=512)  # generated SQL is short
 
     # ---- App ----
     app_env: str = Field(default="development")
@@ -43,17 +48,17 @@ class Settings(BaseSettings):
 
     @property
     def metadata_dsn(self) -> str:
-        """Full read-write access to the metadata DB."""
+        """Read-write access to the metadata DB."""
         return self._dsn(self.postgres_user, self.postgres_password, self.metadata_db)
 
     @property
     def spider_admin_dsn(self) -> str:
-        """Admin access to the spider DB (used by the loader to create schemas)."""
+        """Admin access to the spider DB — the loader uses this to create schemas."""
         return self._dsn(self.postgres_user, self.postgres_password, self.spider_db)
 
     @property
     def spider_readonly_dsn(self) -> str:
-        """Read-only access used by the sandboxed executor (Week 3)."""
+        """Read-only access for the sandboxed executor (Week 3)."""
         return self._dsn(
             self.query_executor_user, self.query_executor_password, self.spider_db
         )

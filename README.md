@@ -6,7 +6,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Status](https://img.shields.io/badge/status-Week%201-orange)
+![Status](https://img.shields.io/badge/status-pipeline%20working-brightgreen)
 
 **SURF 2026 research project — Sewanee, advised by Dr. Stephen Carl.**
 
@@ -15,6 +15,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Current Status](#current-status)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
@@ -34,9 +35,17 @@ This project investigates a research question: **how far can schema-aware prompt
 
 It consists of three components:
 
-1. **Text-to-SQL web application** — a user asks a question in plain English; the system inspects the connected database, builds a schema-aware prompt, routes it to a selected LLM, executes the generated SQL in a read-only sandbox, and returns the results.
-2. **Automated benchmarking engine** — evaluates every combination of *LLM × prompt strategy × query-complexity tier* on the [Spider benchmark](https://yale-lily.github.io/spider) (10,000+ questions across 200 databases), measuring execution accuracy, latency, and cost.
+1. **Text-to-SQL pipeline** — inspects the connected database, builds a prompt under a selected strategy, routes it to an LLM, executes the generated SQL in a read-only sandbox, and scores the result against a gold answer.
+2. **Automated benchmarking engine** — evaluates every combination of *LLM x prompt strategy x query-complexity tier* on the [Spider benchmark](https://yale-lily.github.io/spider) (10,000+ questions across 200 databases), measuring execution accuracy, latency, and cost.
 3. **RAG-based self-correction pipeline** — when a query fails, retrieves relevant schema context and similar solved examples from a vector store, then re-prompts the model to repair it, measuring the accuracy gain.
+
+---
+
+## Current Status
+
+The end-to-end pipeline is implemented and verified on a synthetic Spider-format sample: a natural-language question is converted to SQL under any of four prompt strategies, executed in a read-only sandbox, and scored against the gold query by execution accuracy. A comparison runner benchmarks all four strategies side by side and reports per-strategy accuracy and API cost.
+
+Next milestone (Week 4): load the full Spider dataset and vendor Spider's official evaluator so results are comparable to published research.
 
 ---
 
@@ -44,31 +53,27 @@ It consists of three components:
 
 ```
   question + target database
-        │
-        ▼
-  ┌──────────────────┐
-  │ Schema           │   reads tables, columns, keys, sample rows
-  │ Introspector     │   → renders prompt-ready DDL              [✅ Week 1]
-  └──────────────────┘
-        │
-        ▼
-  ┌──────────────────┐
-  │ Prompt Builder   │   4 strategies: zero-shot, few-shot,
-  │ + LLM Router     │   chain-of-thought, schema-aware          [⏳ Week 2]
-  └──────────────────┘
-        │  generated SQL
-        ▼
-  ┌──────────────────┐
-  │ Read-only        │   query_executor role; cannot mutate data
-  │ Execution Sandbox│   (write-block already verified)          [⏳ Week 3]
-  └──────────────────┘
-        │  results / error
-        ▼
-  ┌──────────────────┐        ┌──────────────────┐
-  │ Benchmark Engine │◀──────▶│ RAG Self-         │
-  │ (Spider scoring) │        │ Correction Loop   │
-  │      [⏳ Wk 4–5] │        │      [⏳ Week 6]  │
-  └──────────────────┘        └──────────────────┘
+        |
+        v
+  Schema Introspector          reads tables, columns, keys, sample rows     (implemented)
+        |  prompt-ready schema
+        v
+  Prompt Builder + LLM Router  4 strategies; routes to Claude, tracks cost  (implemented)
+        |  generated SQL
+        v
+  SQL Cleanup                  strips markdown fences from model output     (implemented)
+        |
+        v
+  Read-only Execution Sandbox  query_executor role; search_path; timeout    (implemented)
+        |  result rows / error
+        v
+  Scorer                       execution accuracy vs gold query             (implemented, basic)
+        |
+        v
+  Benchmark Engine + Analysis  full Spider + official evaluator             (planned, Week 4-5)
+        |
+        v
+  RAG Self-Correction Loop     retrieve context, repair failed SQL          (planned, Week 6)
 ```
 
 ---
@@ -80,9 +85,9 @@ It consists of three components:
 | Backend | Python 3.12, FastAPI, Pydantic |
 | Database | PostgreSQL 16, psycopg 3 |
 | Infrastructure | Docker, Docker Compose |
-| LLM providers | OpenAI, Anthropic, Google Gemini, Ollama (local Llama) |
-| RAG | ChromaDB, Sentence-Transformers |
-| Frontend | React (Weeks 7–8) |
+| LLM providers | Anthropic Claude (implemented); OpenAI, Google Gemini, Ollama (planned) |
+| RAG | ChromaDB, Sentence-Transformers (planned) |
+| Frontend | React (Weeks 7-8) |
 | Tooling | pytest, Ruff, Make |
 
 ---
@@ -93,14 +98,15 @@ It consists of three components:
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - Python 3.12+
+- An Anthropic API key (for the generation pipeline)
 
 ### Installation
 
 ```bash
 git clone <your-repo-url> text-to-sql && cd text-to-sql
-cp .env.example .env          # set your database passwords
+cp .env.example .env          # set database passwords and ANTHROPIC_API_KEY
 
-# start PostgreSQL (creates the `spider` + `metadata` DBs and read-only role)
+# start PostgreSQL (creates the spider + metadata DBs and the read-only role)
 docker compose up -d db
 
 # set up the Python environment
@@ -122,6 +128,15 @@ python scripts/explore_spider.py --data-dir data/spider
 python scripts/load_spider.py   --data-dir data/spider
 ```
 
+### Running the Pipeline
+
+```bash
+python scripts/test_llm.py             # single Claude call; prints cost
+python scripts/test_text_to_sql.py     # question -> SQL on the sample
+python scripts/test_pipeline.py        # generate -> execute -> score
+python scripts/compare_strategies.py   # benchmark all four strategies
+```
+
 ### Running the API
 
 ```bash
@@ -137,24 +152,34 @@ Then visit `http://localhost:8000/health` and `http://localhost:8000/health/db`.
 ```
 text-to-sql/
 ├── backend/
-│   ├── config.py                  # typed settings + DB connection strings
+│   ├── config.py                  # typed settings + DB connection strings + LLM defaults
 │   ├── main.py                    # FastAPI app (health + DB checks)
 │   ├── models/schemas.py          # Pydantic models for DB structure
 │   ├── services/
-│   │   └── schema_introspector.py # reads any PostgreSQL DB's structure
-│   ├── utils/complexity.py        # SQL → 5-tier complexity classifier
-│   ├── routers/                   # API endpoints (later weeks)
-│   └── prompts/                   # prompt strategies (Week 2)
+│   │   ├── schema_introspector.py # reads any PostgreSQL DB's structure
+│   │   ├── llm_router.py          # sends prompts to Claude; tracks tokens + cost
+│   │   ├── sql_generator.py       # introspector + strategy + router -> SQL
+│   │   ├── sql_executor.py        # runs SQL in a read-only sandbox
+│   │   └── scorer.py              # execution-accuracy scoring vs gold
+│   ├── prompts/strategies.py      # zero-shot / schema-aware / few-shot / chain-of-thought
+│   ├── utils/
+│   │   ├── complexity.py          # SQL -> 5-tier complexity classifier
+│   │   └── sql_extract.py         # strip markdown fences from LLM output
+│   └── routers/                   # API endpoints (later weeks)
 ├── scripts/
 │   ├── download_spider.sh         # fetch the real Spider dataset
 │   ├── make_sample_spider.py      # generate a faithful tiny sample
 │   ├── explore_spider.py          # dataset stats + complexity report
-│   └── load_spider.py             # SQLite → PostgreSQL loader
+│   ├── load_spider.py             # SQLite -> PostgreSQL loader
+│   ├── test_llm.py                # single-call smoke test (cost check)
+│   ├── test_text_to_sql.py        # end-to-end generation on the sample
+│   ├── test_pipeline.py           # generate + execute + score
+│   └── compare_strategies.py      # benchmark all four strategies
 ├── docker/postgres-init/          # one-time DB + role initialization
 ├── tests/                         # classifier + introspector tests
-├── data/                          # datasets (gitignored; download/generated)
+├── data/                          # datasets (gitignored; downloaded/generated)
 ├── benchmarks/                    # results + analysis (later weeks)
-├── frontend/                      # React app (Weeks 7–8)
+├── frontend/                      # React app (Weeks 7-8)
 ├── docker-compose.yml
 ├── Makefile
 └── requirements.txt
@@ -175,15 +200,21 @@ The suite covers the SQL complexity classifier (unit tests) and the schema intro
 ## Design Decisions
 
 - **One PostgreSQL instance, many schemas.** Each Spider `db_id` becomes a schema inside the `spider` database — lighter on a laptop than 200 separate databases. App data lives in a separate `metadata` database.
-- **Read-only executor role.** The `query_executor` role can only `SELECT`. The sandboxed executor connects as this role, so generated SQL can never mutate data (write-block verified: `DELETE` → permission denied).
+- **Read-only executor role.** The `query_executor` role can only `SELECT`. The sandboxed executor connects as this role, so generated SQL can never mutate data (write-block verified: `DELETE` returns permission denied).
 - **Sanitized identifiers on load.** Identifiers are lowercased and sanitized so LLM-generated, unquoted SQL executes against the loaded schemas.
+- **Prompt strategy as the research variable.** Four strategies (zero-shot, schema-aware, few-shot, chain-of-thought) are benchmarked under identical conditions to isolate the effect of prompt design.
+- **Cost-tracked LLM router.** Every call reports input/output tokens and estimated USD cost. The default model is Claude Haiku for economy; higher tiers are reserved for targeted comparison.
+- **Execution-accuracy scoring.** Correctness is measured by running the generated and gold queries and comparing result sets, rather than by string-matching SQL.
 - **Project-defined complexity tiers.** Spider's easy/medium/hard/extra labels are *computed* by its `evaluation.py`, not stored in the data. This project uses its own transparent 5-tier classifier; Spider's official evaluator will be vendored in Week 4 for paper-comparable numbers.
 
 ---
 
 ## Known Limitations
 
-- The loader maps column **types** but not `NOT NULL` / `CHECK` constraints from SQLite. Acceptable for read-only benchmarking; revisit if needed.
+- The scorer uses a simple result-set comparison and penalizes cosmetic differences (extra columns, column ordering). Spider's official evaluator will be vendored in Week 4 for rigorous, paper-comparable scoring.
+- Only Anthropic Claude is currently wired into the router; OpenAI, Gemini, and Ollama are planned to complete the multi-LLM comparison.
+- The pipeline currently runs against a synthetic two-database sample; the full Spider dataset is not yet loaded.
+- The loader maps column **types** but not `NOT NULL` / `CHECK` constraints from SQLite. Acceptable for read-only benchmarking.
 - Spider's hosting (Google Drive / Hugging Face) changes over time — confirm the current link at <https://yale-lily.github.io/spider>.
 
 ---
@@ -191,15 +222,15 @@ The suite covers the SQL complexity classifier (unit tests) and the schema intro
 ## Roadmap
 
 | Week | Focus | Status |
-|------|-------|:------:|
-| 1 | Project scaffold, Dockerized PostgreSQL, Spider tooling, schema introspector | ✅ |
-| 2 | Prompt strategies + multi-LLM router | ⏳ |
-| 3 | Read-only SQL execution sandbox + scoring | ⏳ |
-| 4–5 | Automated benchmarking + analysis | ⏳ |
-| 6 | RAG self-correction pipeline | ⏳ |
-| 7–8 | React frontend + results dashboard | ⏳ |
-| 9 | Deployment | ⏳ |
-| 10 | Research paper + poster | ⏳ |
+|------|-------|--------|
+| 1 | Project scaffold, Dockerized PostgreSQL, Spider tooling, schema introspector | Done |
+| 2 | Four prompt strategies + cost-tracked LLM router | Done |
+| 3 | Read-only SQL execution sandbox + execution-accuracy scoring | Done |
+| 4-5 | Full Spider dataset, official evaluator, automated benchmarking + analysis | In progress |
+| 6 | RAG self-correction pipeline | Planned |
+| 7-8 | React frontend + results dashboard | Planned |
+| 9 | Deployment | Planned |
+| 10 | Research paper + poster | Planned |
 
 ---
 
