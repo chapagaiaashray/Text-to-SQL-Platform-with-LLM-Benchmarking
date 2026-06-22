@@ -71,7 +71,17 @@ question + target database
      scored benchmark results
 ```
 
-**Stages.** The *Schema Introspector* reads the target database's tables, columns, and keys and renders them for the prompt. The *Prompt Builder + LLM Router* wraps that schema under one of four strategies and calls the model, tracking token cost. *SQL Cleanup* strips markdown fences from the output. The *Execution Sandbox* runs the query as a read-only role with a timeout. The *Scorer* compares the result against the gold query (execution accuracy). The *Benchmark Engine* and *RAG self-correction loop* are the next milestones.
+**Stages.** 
+
+- The *Schema Introspector* reads the target database's tables, columns, and keys and renders them for the prompt. The *Prompt Builder + LLM Router* wraps that schema under one of four strategies and calls the model, tracking token cost. 
+
+- *SQL Cleanup* strips markdown fences from the output. 
+
+- The *Execution Sandbox* runs the query as a read-only role with a timeout. 
+
+- The *Scorer* compares the result against the gold query (execution accuracy). 
+
+- The *Benchmark Engine* and *RAG self-correction loop* are the next milestones.
 ---
 
 ## Tech Stack
