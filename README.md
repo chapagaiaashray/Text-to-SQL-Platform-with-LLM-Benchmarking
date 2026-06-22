@@ -73,7 +73,9 @@ question + target database
 
 **Stages.** 
 
-- The *Schema Introspector* reads the target database's tables, columns, and keys and renders them for the prompt. The *Prompt Builder + LLM Router* wraps that schema under one of four strategies and calls the model, tracking token cost. 
+- The *Schema Introspector* reads the target database's tables, columns, and keys and renders them for the prompt. 
+
+- The *Prompt Builder + LLM Router* wraps that schema under one of four strategies and calls the model, tracking token cost. 
 
 - *SQL Cleanup* strips markdown fences from the output. 
 
