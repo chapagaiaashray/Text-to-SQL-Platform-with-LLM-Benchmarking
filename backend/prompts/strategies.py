@@ -2,7 +2,11 @@
 
 Each strategy turns a question + the introspected schema into a system+user
 prompt. They differ in how much context they give the model and whether they
-ask it to reason — that difference is the research variable we benchmark.
+ask it to reason. That difference is the research variable we benchmark.
+
+The output rules in the system prompt are shared across strategies on purpose:
+the only thing that should vary between strategies is the context they supply,
+not what shape of answer they ask for.
 """
 from dataclasses import dataclass
 
@@ -17,14 +21,26 @@ class Prompt:
     max_tokens: int | None = None   # chain-of-thought needs more room
 
 
+# Output rules shared by every strategy. The column rule exists because the
+# model's most common failure was returning extra "helpful" columns (a count,
+# an id, a sort key) that the question never asked for, which fails an
+# execution-accuracy comparison against the gold result.
+_OUTPUT_RULES = (
+    "Select only the columns the question asks for. Do not add extra columns "
+    "such as counts, ids, or sort keys unless the question requests them. "
+    "Avoid SELECT * unless the question asks for all columns."
+)
+
 _SYSTEM = (
     "You translate natural-language questions into PostgreSQL queries. "
     "Reply with a single SQL query using only the tables and columns shown. "
-    "Return only the SQL — no prose, no markdown."
+    f"{_OUTPUT_RULES} "
+    "Return only the SQL. No prose, no markdown."
 )
 
 _SYSTEM_COT = (
     "You translate natural-language questions into PostgreSQL queries. "
+    f"{_OUTPUT_RULES} "
     "Reason step by step, then give the final answer as a single SQL query "
     "inside a ```sql code block."
 )
@@ -43,8 +59,8 @@ def _full(db: DatabaseSchema) -> str:
     return SchemaIntrospector.to_prompt_context(db)
 
 
-# Generic, schema-agnostic examples — they show the input->output shape
-# without leaking answers. Real few-shot retrieval comes later (RAG, Week 6).
+# Generic, schema-agnostic examples. They show the input->output shape without
+# leaking answers. Real few-shot retrieval comes later (RAG, Week 6).
 _FEWSHOT = [
     ("How many rows are there?", "SELECT COUNT(*) FROM some_table"),
     ("List the distinct categories.", "SELECT DISTINCT category FROM some_table"),
