@@ -44,6 +44,19 @@ It consists of three components:
 
 ## Results
 
+### The four prompt strategies
+
+All four receive the same question and differ only in what context they supply. A "shot" is a worked example, so zero-shot means zero examples provided.
+
+| Strategy | What the prompt contains |
+|----------|--------------------------|
+| **zero-shot** | Table and column names only. No types, keys, or sample rows, and no worked examples. Tests how well the model does with minimal context. |
+| **schema-aware** | Full `CREATE TABLE` DDL with column types, primary keys, and foreign keys, plus a few sample rows from each table. Tests how much richer schema detail helps. |
+| **few-shot** | The same full DDL, preceded by two generic worked question-to-SQL example pairs. Tests whether demonstrating the expected output format helps. |
+| **chain-of-thought** | The same full DDL, with an instruction to reason step by step (identify tables, joins, filters) before writing the query. Tests whether explicit reasoning helps, at the cost of extra output tokens. |
+
+Every strategy shares the same output rules, including the instruction to select only the columns the question asks for, so the context each supplies is the only variable.
+
 Full Spider dev set, all four prompt strategies, Claude Haiku 4.5. Of 1,034 dev questions, 150 (14.5%) have gold queries that do not execute on PostgreSQL and are excluded, leaving **884 scored questions per strategy**. Total API cost for the complete run: **$4.34**.
 
 | Strategy | Accuracy | Correct | Cost | Cost / correct answer |
