@@ -21,6 +21,7 @@ from backend.services.sql_executor import SQLExecutor
 from backend.services.sql_generator import SQLGenerator
 from backend.utils.spider_hardness import eval_hardness
 from backend.utils.sql_dialect import normalize_gold_sql
+from backend.prompts.strategies import STRATEGIES
 
 N = 1034
 SEED = 42
@@ -82,7 +83,7 @@ def generate_with_retry(gen, question, db_id, attempts=4):
 
 scorer = Scorer()
 
-for strat in STRATEGIES:
+for strat in ("rag_few_shot",):
     state["runs"].setdefault(strat, {})
     done = state["runs"][strat]
     remaining = len(sample) - len(done)

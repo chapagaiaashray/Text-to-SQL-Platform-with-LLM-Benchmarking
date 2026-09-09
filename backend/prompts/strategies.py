@@ -104,12 +104,33 @@ def chain_of_thought(question: str, db: DatabaseSchema) -> Prompt:
     )
     return Prompt(_SYSTEM_COT, user, max_tokens=900)
 
+def rag_few_shot(question: str, db: DatabaseSchema,
+                 examples: list | None = None) -> Prompt:
+    """Full schema plus examples retrieved from the training split.
+
+    Differs from few_shot only in that the examples are semantically similar
+    to this question rather than generic and hardcoded. That difference is the
+    variable under test.
+    """
+    if not examples:
+        return schema_aware(question, db)   # graceful fallback
+    shown = "\n\n".join(f"Q: {e.question}\nSQL: {e.sql}" for e in examples)
+    user = (
+        f"Database schema:\n{_full(db)}\n\n"
+        f"Similar solved questions (from other databases, for reference only — "
+        f"use the schema above for table and column names):\n{shown}\n\n"
+        f"Q: {question}\nSQL:"
+    )
+    return Prompt(_SYSTEM, user)
+
 
 STRATEGIES = {
     "zero_shot": zero_shot,
     "schema_aware": schema_aware,
     "few_shot": few_shot,
     "chain_of_thought": chain_of_thought,
+    "rag_few_shot": rag_few_shot,
+    "rag_adaptive": rag_few_shot,
 }
 
 
